@@ -1,0 +1,83 @@
+#!/usr/bin/python3
+
+import json
+import pathlib
+import sys
+from glob import glob
+import argparse
+from testing import *
+import os
+
+parser = argparse.ArgumentParser()
+parser.add_argument("testSpec", help="(Default: test/pub) Can be a directory containing tests or a single file, such as test/pub/example.s", metavar="testsuite", default="tests", nargs="?", type=pathlib.Path)
+parser.add_argument("--marsPath", help="(Default: ./mars) Path to the mars executable", metavar="marspath", default="./mars", nargs="?", type=pathlib.Path)
+parser.add_argument("-v", "--verbose", help="Give more verbose error output", action="store_true")
+parser.add_argument("-i", "--implementation", help="(Default: ./src) Which implementation to use, eg. implementations/correct", type=pathlib.Path)
+parser.add_argument("--debug", help="Create a directory ./debugbox ready to debug the supplied test", action="store_true")
+parser.add_argument("-j", "--json", help="Dump test result to file", type=pathlib.Path, metavar="filename", nargs="?")
+parser.add_argument("-q", "--quiet", help="Reduce noise", action="store_true")
+parser.add_argument("--timing", help="Profile assembly instruction count. Don't actually use this, it's slow." , action="store_true")
+args = parser.parse_args()
+
+if not args.implementation:
+    if not pathlib.Path("./implementations").exists():
+        implementations = [ pathlib.Path("./src") ]
+    else:
+        implementations = [ pathlib.Path(path) for path in glob("implementations/**/*") ]
+else:
+    implementations = [ pathlib.Path(str(args.implementation)) ]
+
+if args.json and len(implementations) > 1:
+    print("Can only dump test results to JSON for a single implementation. Aborting!")
+    exit(1)
+
+testSpec = args.testSpec
+marsPath = str(args.marsPath)
+verbose = args.verbose
+
+tests = [ testSpec ] if str(testSpec).endswith(".s") else sorted([*[ x for x in testSpec.glob("./*.s")], *[x for x in testSpec.glob("./*/*.s") ]])
+
+if args.debug:
+    if len(tests) != 1:
+        print("Can only create debugbox for a single test! Aborting!")
+        exit(1)
+    if len(implementations) != 1:
+        print("Can only create debugbox for a single implementation! Aborting!")
+        exit(1)
+    test_name, _ = os.path.splitext(tests[0]) # get filename and extension
+    test = MipsTest(test_name,
+                { implementations[0].joinpath("main.s"): tests[0] },
+                implementations[0],
+                pathlib.Path(test_name + ".ref")
+            )
+    test.build_testbox()
+    print(f"Done creating directory ./debugbox containing files: {', '.join(str(path) for path in test.get_sources())}")
+    exit(0)
+
+for implementation in implementations:
+    results = []
+    if not args.quiet: print(f"{'Test Results' if len(implementations) == 0 else implementation}")
+    for index, testPath in enumerate(tests):
+        if not args.quiet: print(f"  {'Profiling' if args.timing else 'Running'} test ({index+1}/{len(tests)})", end="\r")
+        test_name, _ = os.path.splitext(testPath) # get filename and extension
+        test = MipsTest(
+                test_name,
+                { implementation.joinpath("main.s"): testPath },
+                implementation,
+                pathlib.Path(test_name + ".ref")
+            )
+        results.append(test.run_test(get_runtime=bool(args.timing)))
+    if args.json:
+        with open(args.json, "w") as f:
+            test_suite = {
+                "suiteId": str(testSpec),
+                "tests": [ result.json() for result in results ]
+            }
+            f.writelines(json.dumps(test_suite))
+    test_name_width = max(len(result.test_name) for result in results)
+    for index, result in enumerate(results):
+        if not args.quiet: print(f" {'└' if index == len(results) - 1 else '├'}{result.test_name.ljust(test_name_width)}\t{result.verdict()}")
+        if args.verbose:
+            if not args.quiet: print("Program output:")
+            if not args.quiet: print(result.output, result.stderr)
+    if not args.quiet: print()
