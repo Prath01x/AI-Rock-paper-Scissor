@@ -24,7 +24,7 @@ gen_byte:
 # Arguments:
 #     $a0 : address of configuration in memory
 #   0($a0): eca       (1 word)
-#   4($a0): tape      (1 word)
+#   4($a0): tape                                                                                                                                                          (1 word)
 #   8($a0): tape_len  (1 byte)
 #   9($a0): rule      (1 byte)
 #  10($a0): skip      (1 byte)
@@ -34,6 +34,22 @@ gen_byte:
 #  Look at the field {eca} and use the associated random number generator to generate one bit.
 #  Put the computed bit into $v0
 #
+# Set the seed and generate a random bit
 gen_bit:
-  # TODO
-  jr $ra
+    # Set syscall code for generating a random integer
+    li $v0, 41              # Set to the appropriate syscall number
+    
+    # Set pseudorandom number generator ID to 0
+    li $a0, 0
+    
+    # Perform syscall to obtain a random integer
+    syscall
+    
+    # Extract the least significant bit (LSB) from the random integer
+    andi $v0, $a0, 1        # Extract the least significant bit (LSB) of the generated random integer
+    
+    # Return from the function
+    jr $ra
+
+
+
