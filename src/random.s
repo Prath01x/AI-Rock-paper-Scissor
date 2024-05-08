@@ -19,28 +19,28 @@
 #
 
 gen_byte:
-    # Save the return address
+ 
     move $t3, $ra
 
-    li $v0, 0         # Initialize the byte value to 0
+    li $v0, 0         
     
 Loop:
-    jal gen_bit       # Generate the first bit
-    move $t0, $v0     # Store the result in $t0
+    jal gen_bit       
+    move $t0, $v0     
     
-    jal gen_bit       # Generate the second bit
-    move $t1, $v0     # Store the result in $t1
+    jal gen_bit       
+    move $t1, $v0     
     
-    sll $t0, $t0, 1   # Shift the first bit to the left
-    or $v0, $t0, $t1  # Combine the bits
+    sll $t0, $t0, 1   
+    or $v0, $t0, $t1 
     
-    li $t2, 3         # Check if the result is "11"
-    beq $v0, $t2, Loop  # If the result is "11", generate new bits
+    li $t2, 3         
+    beq $v0, $t2, Loop  
     
-    # Restore the return address
+   
     move $ra, $t3
 
-    jr $ra            # Return
+    jr $ra     
  
 
 
@@ -64,25 +64,24 @@ Loop:
 # Set the seed and generate a random bit
 # gen_bit function
 
-gen_bit:
-    # Save the return address
+gen_bit:			
+   
     move $t5, $ra
 
-    # Set the syscall code for generating a random number
+    
     li $v0, 41
     
-    # Set the pseudorandom number generator ID to 0
+    
     li $a0, 0
     
-    # Perform syscall to generate a random number
+   
     syscall
     
-    # Extract the least significant bit (LSB)
     andi $v0, $a0, 1
      
-    # Restore the return address
+ 
     move $ra, $t5
     
-    # Return the computed bit
+  
     jr $ra
 
