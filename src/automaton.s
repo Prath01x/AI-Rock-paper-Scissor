@@ -51,7 +51,7 @@ j loop
 
 end:
 li $v0 11        
-li $a0      
+li $a0 '\n'    
 syscall           
 
  move $ra $t6
