@@ -19,11 +19,17 @@
 #
 # Returns: Nothing, only print either character 'W', 'L', or 'T' to stdout
 play_game_once:
-move $a3 $ra 
-move $s3 $a0
+addi $sp $sp -200
+sw $ra 8($sp) 
+sw $a0 4($sp)
+
   jal gen_byte
+  sw $s1 0($sp)
+  lw $a0 4($sp)
   move $s1 $v0
+  sw $s1 0($sp)
   jal gen_byte
+  lw $a0 4($sp)
   move $s2 $v0
   b check
 
@@ -31,6 +37,7 @@ move $s3 $a0
 
 
 check:
+lw $s1 0($sp)
 beq $s1 $s2 Tie
 beq $s1 0 rock
 beq $s1 1 paper
@@ -71,7 +78,9 @@ syscall
 j end
 
 end:
-move $a0 $s3
-move $ra $a3
- jr $ra 
+
+lw $ra 8($sp)
+addi $sp $sp 200
+jr $ra 
+
 
