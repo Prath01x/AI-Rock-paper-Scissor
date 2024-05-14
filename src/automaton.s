@@ -1,3 +1,4 @@
+
 # vim:sw=2 syntax=asm
 .text
   .globl simulate_automaton, print_tape
@@ -28,7 +29,7 @@ addi $sp $sp 4
 jr $ra 
 
 simulate_automaton:
-addi $sp $sp -4
+addi $sp $sp -20
 sw $ra ($sp) 
 
 lw $s1 4($a0)# tape
@@ -50,7 +51,7 @@ move $t1 $v0
 
 li $t4 0 # counter
 li $t5 7 # mask for current 3 bits
-looop:
+fucker:
 and $a0 $s1 $t5 # get the current 3 bits with our mask
 srlv $a0 $a0 $t4 # shift result all the way to the right
 jal determinecell # determine the value of the cell
@@ -59,7 +60,7 @@ sllv $v0 $v0 $t2 # "put it back" to the previous position
 or $t1 $t1 $v0 # "insert" the value into the full result
 addi $t4 $t4 1 # increase counter
 sll $t5 $t5 1 # shift mask one to the left
-bne $t4 $s2 looop # looooooop
+bne $t4 $s2 fucker # looooooop
 
 move $a0 $s7
 
@@ -76,11 +77,11 @@ move $a0 $s7
 sw $t1 4($a0)
 lw $ra ($sp)
 li $t1 0
-addi $sp $sp 4
+addi $sp $sp 20
 jr $ra 
 
 
-# $a0 config
+
 
 get_right_most_bits:
 addi $sp $sp -4
@@ -100,20 +101,20 @@ addi $sp $sp 4
 jr $ra 
 
 get_left_most_bits:
-addi $sp $sp -4
+addi $sp $sp -32
 sw $ra 0($sp) 
-lw $t0 4($a0) # tape
-lb $t1 8($a0) # tape_len
+lw $t0 4($a0) # t
+lb $t1 8($a0) # t
 
-andi $v0 $t0 1 # right most bit
-sll $v0 $v0 2 # put this bit as the left neighbor
-subi $t1 $t1 2 # subtract 2 from len to get pos of 2 left most bits
+andi $v0 $t0 1 # t
+sll $v0 $v0 2 # ps the left neighbor
+subi $t1 $t1 2 # om len to get pos of 2 left most bits
 
-srlv $t0 $t0 $t1 # shift right by (len-2) so the left most bits are now in the two right most spaces
-or $v0 $v0 $t0 # combine the two results
+srlv $t0 $t0 $t1  
+or $v0 $v0 $t0 # 						mbine the two results
 
 lw $ra 0($sp)
-addi $sp $sp 4
+addi $sp $sp 32
 jr $ra 
 
 
